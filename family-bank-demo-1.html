@@ -1,0 +1,177 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Family Bank Real-Time Mobile Banking – Live Demo</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Figtree:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--stage:#e4ebe7;--fg:#17261f;--mut:#5b6b63;--panel:#fff;--line:#cfd9d3;--btn:#0b6b4a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--stage:#0d1512;--fg:#dfe9e4;--mut:#93a59b;--panel:#16211c;--line:#2a3a33}}
+:root[data-theme="dark"]{--stage:#0d1512;--fg:#dfe9e4;--mut:#93a59b;--panel:#16211c;--line:#2a3a33}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--stage);color:var(--fg);font-family:Figtree,system-ui,sans-serif;display:flex;align-items:center;justify-content:center;gap:40px;padding:16px;flex-wrap:wrap}
+.side{width:280px;background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px}
+.side h2{margin:0 0 4px;font-size:18px}.side p{margin:0 0 12px;color:var(--mut);font-size:13px;line-height:1.45}
+.side button{display:block;width:100%;text-align:left;margin:0 0 8px;padding:10px 12px;border:1px solid var(--line);background:transparent;color:var(--fg);border-radius:10px;font:600 13px Figtree,sans-serif;cursor:pointer}
+.side button:hover{border-color:var(--btn)}
+.flow{font-size:12px;color:var(--mut);line-height:1.6;margin-top:6px}
+.phone{width:380px;height:780px;max-height:calc(100dvh - 32px);background:#f4f7f5;color:#17261f;border:9px solid #1b2420;border-radius:40px;position:relative;overflow:hidden;display:flex;flex-direction:column}
+#scr{flex:1;overflow-y:auto;position:relative}
+.hd{background:#0b6b4a;color:#fff;padding:22px 20px 18px}
+.row{display:flex;align-items:center;justify-content:space-between}
+.bell{position:relative;background:rgba(255,255,255,.15);border:0;color:#fff;width:40px;height:40px;border-radius:50%;font-size:18px;cursor:pointer}
+#bdg{position:absolute;top:-3px;right:-3px;background:#f2a900;color:#1b2420;font:800 11px Figtree;min-width:18px;height:18px;border-radius:9px;display:none;align-items:center;justify-content:center}
+.bal{font-size:34px;font-weight:800;letter-spacing:-.5px;margin:10px 0 2px}
+.sub{font-size:12px;opacity:.8}
+.acts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:16px 14px 6px}
+.act{background:#fff;border:1px solid #dfe7e2;border-radius:14px;padding:12px 4px;text-align:center;font:600 12px Figtree;color:#17261f;cursor:pointer}
+.act b{display:block;font-size:20px;margin-bottom:4px}
+.card{background:#fff;border:1px solid #dfe7e2;border-radius:14px;margin:10px 14px;padding:4px 14px}
+.sec{font-weight:800;font-size:15px;margin:14px 18px 0}
+.tx{display:flex;justify-content:space-between;align-items:center;padding:11px 0;border-bottom:1px solid #edf1ee;font-size:14px}
+.tx:last-child{border:0}.tx small{display:block;color:#6a7a72;font-size:12px;margin-top:2px}
+.in{color:#0b6b4a;font-weight:700}.out{color:#17261f;font-weight:700}
+#nav{display:none;background:#fff;border-top:1px solid #dfe7e2;padding:8px 0 10px}
+#nav button{flex:1;border:0;background:none;font:600 11px Figtree;color:#6a7a72;cursor:pointer;padding:4px}
+#nav button b{display:block;font-size:18px}#nav .on{color:#0b6b4a}
+.pad{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;padding:0 34px}
+.pad button{height:56px;border-radius:50%;border:1px solid #d7e0db;background:#fff;font:700 22px Figtree;color:#17261f;cursor:pointer}
+.dots{display:flex;gap:12px;justify-content:center;margin:18px 0}
+.dots i{width:14px;height:14px;border-radius:50%;border:2px solid #0b6b4a}.dots i.f{background:#0b6b4a}
+.center{text-align:center;padding:34px 24px 14px}
+.logo{width:56px;height:56px;border-radius:16px;background:#0b6b4a;color:#fff;font:800 24px Figtree;display:inline-flex;align-items:center;justify-content:center;border-bottom:5px solid #f2a900}
+h1{font-size:24px;margin:14px 0 4px}.mut{color:#5b6b63;font-size:13px}.err{color:#b3261e;font-size:13px;min-height:18px;margin:4px 0}
+.pri{display:block;width:calc(100% - 36px);margin:14px 18px;padding:15px;border:0;border-radius:14px;background:#0b6b4a;color:#fff;font:700 16px Figtree;cursor:pointer}
+.sec2{background:#fff;color:#0b6b4a;border:1px solid #0b6b4a}
+.pad+.mut{margin-top:12px;text-align:center}
+.lbl{font-weight:700;font-size:13px;margin:14px 18px 6px;color:#3a4a42}
+.chips{display:flex;flex-direction:column;gap:8px;padding:0 18px}
+.chip{border:1.5px solid #d7e0db;background:#fff;border-radius:12px;padding:11px 12px;font:600 14px Figtree;text-align:left;cursor:pointer;color:#17261f}
+.chip small{display:block;font-weight:400;color:#6a7a72;font-size:12px}.chip.on{border-color:#0b6b4a;background:#eaf5ef}
+input{width:calc(100% - 36px);margin:0 18px;padding:13px;border:1.5px solid #d7e0db;border-radius:12px;font:600 18px Figtree;color:#17261f;background:#fff}
+.step{display:flex;gap:12px;align-items:center;padding:10px 24px;font-size:14px;color:#9aa8a0}
+.step.d{color:#17261f;font-weight:600}.step i{width:22px;height:22px;border-radius:50%;border:2px solid #cfd9d3;display:inline-flex;align-items:center;justify-content:center;font-style:normal;font-size:12px}
+.step.d i{background:#0b6b4a;border-color:#0b6b4a;color:#fff}
+.ok{width:76px;height:76px;border-radius:50%;background:#0b6b4a;color:#fff;font-size:38px;display:inline-flex;align-items:center;justify-content:center;animation:pop .4s}
+@keyframes pop{from{transform:scale(.4);opacity:0}to{transform:none;opacity:1}}
+.stars button{background:none;border:0;font-size:28px;color:#c9d3cd;cursor:pointer}.stars .s{color:#f2a900}
+#toast{position:absolute;left:10px;right:10px;top:-120px;background:#17261f;color:#fff;border-radius:16px;padding:12px 14px;font-size:13px;line-height:1.4;transition:top .35s;z-index:5;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
+#toast.show{top:10px}#toast b{display:block;font-size:13px}#toast small{opacity:.7}
+#sheet{position:absolute;inset:0;background:#f4f7f5;z-index:4;display:none;flex-direction:column}
+.nt{display:flex;gap:12px;padding:13px 18px;border-bottom:1px solid #e3eae6;font-size:13px;line-height:1.4}
+.nt i{width:34px;height:34px;flex:none;border-radius:50%;display:flex;align-items:center;justify-content:center;font-style:normal;background:#eaf5ef}
+.nt.alert i{background:#fde8e6}.nt.out i{background:#fdf3d9}.nt small{color:#6a7a72}
+@media (max-width:520px){body{padding:0;gap:0}.side{display:none}.phone{width:100vw;height:100dvh;max-height:none;border:0;border-radius:0}}
+</style>
+</head>
+<body>
+<div class="side">
+  <h2>Presenter controls</h2>
+  <p>Log in on the phone first, then fire live events to show notifications arriving without a refresh.</p>
+  <button data-sim="mpesa">M-Pesa deposit: KES 5,000</button>
+  <button data-sim="salary">Salary credit: KES 85,000</button>
+  <button data-sim="fraud">Fraud rule: new device login</button>
+  <button data-sim="reset">Reset demo</button>
+  <div class="flow"><b>Demo login</b><br>PIN 1234, then OTP 482913<br><br><b>Real-time flow</b><br>Gateway authenticates, Transaction Service validates, debit and credit run in one database transaction, event goes to the queue, Notification Service pushes to the app over WebSocket.</div>
+</div>
+
+<div class="phone">
+  <div id="toast"></div>
+  <div id="scr"></div>
+  <div id="nav" class="row">
+    <button data-go="home"><b>⌂</b>Home</button>
+    <button data-go="xfer"><b>⇄</b>Transfer</button>
+    <button data-go="history"><b>☰</b>History</button>
+  </div>
+  <div id="sheet"></div>
+</div>
+
+<script>
+const $=s=>document.querySelector(s),sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const fmt=n=>n.toLocaleString("en-KE",{minimumFractionDigits:2,maximumFractionDigits:2});
+const clock=()=>new Date().toLocaleTimeString("en-KE",{hour:"2-digit",minute:"2-digit",hour12:false});
+const seed=()=>({scr:"login",pin:"",otp:"",err:"",bal:48250,sav:120000,hide:false,notes:[],unread:0,
+  txns:[{t:"Naivas Supermarket",a:-3420,d:"Today, 09:14"},{t:"M-Pesa deposit",a:10000,d:"Yesterday, 18:02"},{t:"KPLC prepaid tokens",a:-2000,d:"Yesterday, 07:45"},{t:"Rent: Kilimani Apartments",a:-25000,d:"1 Nov, 08:00"}],
+  x:{to:null,amt:"",note:"",step:"form",err:"",n:0,ms:0,ref:"",rate:0}});
+let S=seed(),tt;
+const BEN=[{id:"sav",n:"My Savings",s:"Family Bank · 0456 ••• 120",fee:0},{id:"john",n:"John Otieno",s:"Family Bank · 0123 ••• 774",fee:0},{id:"grace",n:"Grace Achieng",s:"KCB via PesaLink · 1190 ••• 305",fee:50}];
+
+function pad(){return `<div class="pad">${[1,2,3,4,5,6,7,8,9,"",0,"⌫"].map(k=>k===""?"<span></span>":`<button data-k="${k}">${k}</button>`).join("")}</div>`}
+function dots(v,n){return `<div class="dots">${Array.from({length:n},(_,i)=>`<i class="${i<v.length?"f":""}"></i>`).join("")}</div>`}
+
+function login(){return `<div class="center"><span class="logo">FB</span><h1>Karibu, Amina</h1><div class="mut">Enter your 4-digit PIN to continue</div>${dots(S.pin,4)}<div class="err">${S.err}</div></div>${pad()}<div class="mut">Demo PIN: 1234</div>`}
+function otp(){return `<div class="center"><span class="logo">✉</span><h1>Verify it’s you</h1><div class="mut">We sent a 6-digit code to 0712 ••• 345</div>${dots(S.otp,6)}<div class="err">${S.err}</div></div>${pad()}<div class="mut">Demo OTP: 482913</div>`}
+function txRows(a){return a.map(t=>`<div class="tx"><div>${t.t}<small>${t.d}</small></div><span class="${t.a>0?"in":"out"}">${t.a>0?"+":"−"} ${fmt(Math.abs(t.a))}</span></div>`).join("")}
+function head(t,sub){return `<div class="hd"><div class="row"><div><div class="sub">${sub}</div><b style="font-size:18px">${t}</b></div><button class="bell" data-act="bell">🔔<span id="bdg"></span></button></div>`}
+
+function home(){return head("Amina Wanjiru","Habari, welcome back")+`<div class="sub" style="margin-top:18px">Current account · 0123 4567 8901 <a data-act="eye" style="cursor:pointer">${S.hide?"👁 show":"🙈 hide"}</a></div><div class="bal">KES ${S.hide?"••••••":fmt(S.bal)}</div><div class="sub">Live balance · updated ${clock()}</div></div>
+<div class="acts"><div class="act" data-go="xfer"><b>⇄</b>Transfer</div><div class="act" data-sim="mpesa"><b>📱</b>M-Pesa</div><div class="act" data-sim="bill"><b>💡</b>Pay bill</div><div class="act" data-go="history"><b>☰</b>History</div></div>
+<div class="card"><div class="tx"><div>Savings account<small>0456 ••• 120</small></div><span class="out">KES ${S.hide?"••••":fmt(S.sav)}</span></div></div>
+<div class="sec">Recent activity</div><div class="card">${txRows(S.txns.slice(0,4))}</div>`}
+
+function history(){return head("Transaction history","All activity")+`</div><div class="card">${txRows(S.txns)}</div>`}
+
+function xfer(){const x=S.x;
+ if(x.step==="form")return head("Transfer money","Instant · own, Family Bank or interbank")+`</div><div class="lbl">Send to</div><div class="chips">${BEN.map(b=>`<button class="chip ${x.to===b.id?"on":""}" data-to="${b.id}">${b.n}<small>${b.s}${b.fee?" · fee KES "+b.fee:" · free"}</small></button>`).join("")}</div>
+<div class="lbl">Amount (KES)</div><input id="amt" type="number" inputmode="decimal" placeholder="0.00" value="${x.amt}"><div class="lbl">Reference (optional)</div><input id="note" style="font-size:15px" placeholder="e.g. Rent share" value="${x.note}"><div class="err" style="margin:8px 18px">${x.err}</div><button class="pri" data-act="review">Review transfer</button>`;
+ const b=BEN.find(b=>b.id===x.to),amt=+x.amt;
+ if(x.step==="review")return head("Confirm transfer","Check the details")+`</div><div class="card"><div class="tx"><span>To</span><b>${b.n}</b></div><div class="tx"><span>Amount</span><b>KES ${fmt(amt)}</b></div><div class="tx"><span>Fee</span><b>KES ${fmt(b.fee)}</b></div><div class="tx"><span>Total debit</span><b>KES ${fmt(amt+b.fee)}</b></div></div><button class="pri" data-act="send">Confirm and send</button><button class="pri sec2" style="margin-top:0" data-act="edit">Edit</button>`;
+ const L=["Request authenticated","Balance and limits validated","Debit and credit committed","Notification pushed to your phone"];
+ if(x.step==="proc")return `<div class="center"><h1>Sending…</h1><div class="mut">Processing in real time</div></div>${L.map((l,i)=>`<div class="step ${i<x.n?"d":""}"><i>${i<x.n?"✓":""}</i>${l}</div>`).join("")}`;
+ return `<div class="center"><span class="ok">✓</span><h1>Sent in ${x.ms} s</h1><div class="mut">KES ${fmt(amt)} to ${b.n}<br>Ref ${x.ref} · New balance KES ${fmt(S.bal)}</div><div style="margin-top:18px" class="mut">Rate this transfer</div><div class="stars">${[1,2,3,4,5].map(i=>`<button data-star="${i}" class="${i<=x.rate?"s":""}">★</button>`).join("")}</div><div class="mut">${x.rate?"Thank you for your feedback.":""}</div></div><button class="pri" data-act="done">Done</button>`}
+
+function render(){const v=S.scr;
+ $("#scr").innerHTML=v==="login"?login():v==="otp"?otp():v==="home"?home():v==="history"?history():xfer();
+ const main=["home","history","xfer"].includes(v);$("#nav").style.display=main&&S.x.step!=="proc"?"flex":"none";
+ document.querySelectorAll("#nav button").forEach(b=>b.classList.toggle("on",b.dataset.go===v));badge()}
+function badge(){const b=$("#bdg");if(!b)return;b.style.display=S.unread?"flex":"none";b.textContent=S.unread}
+
+function push(title,msg,kind,ch){S.notes.unshift({title,msg,kind,ch:ch||"Push · SMS · In-app",t:clock()});S.unread++;
+ const t=$("#toast");t.innerHTML=`<b>${title}</b>${msg}<br><small>${S.notes[0].ch} · now</small>`;t.classList.add("show");clearTimeout(tt);tt=setTimeout(()=>t.classList.remove("show"),4500);
+ if(["home","history"].includes(S.scr))render();else badge();if($("#sheet").style.display==="flex")sheet()}
+function sheet(){S.unread=0;badge();const ic={in:"⬇",out:"⬆",alert:"⚠"};
+ $("#sheet").style.display="flex";$("#sheet").innerHTML=`<div class="hd"><div class="row"><b style="font-size:18px">Notifications</b><button class="bell" data-act="close">✕</button></div></div><div style="overflow:auto;flex:1">${S.notes.length?S.notes.map(n=>`<div class="nt ${n.kind}"><i>${ic[n.kind]||"•"}</i><div><b>${n.title}</b><br>${n.msg}<br><small>${n.ch} · ${n.t}</small></div></div>`).join(""):`<div class="center mut">No alerts yet. Make a transfer or use the presenter controls.</div>`}</div>`}
+
+function credit(t,a,title,msg){S.bal+=a;S.txns.unshift({t,a,d:"Today, "+clock()});push(title,msg+` New balance KES ${fmt(S.bal)}.`,"in")}
+function sim(k){
+ if(k==="mpesa")credit("M-Pesa deposit",5000,"M-Pesa deposit received","KES 5,000.00 from 0712 ••• 345 via Daraja.");
+ if(k==="salary")credit("Salary: Acme Ltd",85000,"Salary credited","KES 85,000.00 from Acme Ltd.");
+ if(k==="fraud")push("Security alert","New device login attempt from Nakuru. Was this you?","alert","Push · SMS");
+ if(k==="bill"){if(S.bal<2000)return;S.bal-=2000;S.txns.unshift({t:"KPLC prepaid tokens",a:-2000,d:"Today, "+clock()});push("Bill paid","KES 2,000.00 paid to KPLC prepaid. Token sent by SMS.","out")}
+ if(k==="reset"){S=seed();$("#sheet").style.display="none";render()}}
+
+async function send(){const x=S.x,b=BEN.find(b=>b.id===x.to),amt=+x.amt,t0=performance.now();x.step="proc";x.n=0;render();
+ for(let i=1;i<=4;i++){await sleep(i==3?600:380);x.n=i;if(i<4)render()}
+ x.ms=((performance.now()-t0)/1000).toFixed(1);x.ref="FB"+Math.random().toString(36).slice(2,9).toUpperCase();
+ S.bal-=amt+b.fee;if(b.id==="sav")S.sav+=amt;
+ S.txns.unshift({t:"Transfer to "+b.n,a:-(amt+b.fee),d:"Today, "+clock()});x.step="done";render();
+ push("Debit alert",`KES ${fmt(amt)} sent to ${b.n}. Ref ${x.ref}. New balance KES ${fmt(S.bal)}.`,"out")}
+
+document.addEventListener("click",async e=>{const el=e.target.closest("[data-k],[data-go],[data-act],[data-sim],[data-to],[data-star],#toast");if(!el)return;const d=el.dataset;
+ if(el.id==="toast"){sheet();return}
+ if(d.sim){sim(d.sim);return}
+ if(d.k!==undefined){const f=S.scr==="login"?"pin":"otp",n=f==="pin"?4:6;
+  if(d.k==="⌫")S[f]=S[f].slice(0,-1);else if(S[f].length<n)S[f]+=d.k;S.err="";render();
+  if(S[f].length===n){await sleep(250);
+   if(f==="pin"){if(S.pin==="1234"){S.scr="otp";render();await sleep(900);if(S.scr==="otp"){push("Family Bank OTP","Your one-time code is 482913. Valid for 5 minutes.","in","SMS")}}else{S.pin="";S.err="Incorrect PIN. Try 1234.";render()}}
+   else{if(S.otp==="482913"){S.scr="home";S.unread=0;S.notes=[];render();setTimeout(()=>{if(S.scr==="home")credit("M-Pesa deposit",1500,"M-Pesa deposit received","KES 1,500.00 from 0722 ••• 118.")},6000)}else{S.otp="";S.err="Wrong code. Try 482913.";render()}}}
+  return}
+ if(d.go){if(d.go==="xfer"&&S.x.step==="done")S.x=seed().x;S.scr=d.go;render();return}
+ if(d.to){S.x.amt=$("#amt").value;S.x.note=$("#note").value;S.x.to=d.to;S.x.err="";render();return}
+ if(d.star){S.x.rate=+d.star;render();return}
+ const a=d.act;
+ if(a==="bell")sheet();if(a==="close")$("#sheet").style.display="none";
+ if(a==="eye"){S.hide=!S.hide;render()}
+ if(a==="edit"){S.x.step="form";render()}
+ if(a==="done"){S.x=seed().x;S.scr="home";render()}
+ if(a==="review"){const x=S.x;x.amt=$("#amt").value;x.note=$("#note").value;const b=BEN.find(b=>b.id===x.to),amt=+x.amt;
+  x.err=!b?"Choose who to send to.":!(amt>0)?"Enter an amount above KES 0.":amt+b.fee>S.bal?`Insufficient funds. Available: KES ${fmt(S.bal)}.`:"";
+  if(!x.err)x.step="review";render()}
+ if(a==="send")send()});
+render();
+</script>
+</body>
+</html>
