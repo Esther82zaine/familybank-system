@@ -1,0 +1,12 @@
+# Listing 3.5.1 (simplified): one command starts the whole system:  docker compose up --build
+services:
+  bank:
+    build: .
+    ports: ["3000:3000"]
+    environment:
+      JWT_SECRET: change-this-long-random-secret
+      DEMO_MODE: "true"          # set to "false" to stop showing the SMS code on screen
+      DB_FILE: /data/bank.db
+    volumes: ["bankdata:/data"]
+volumes:
+  bankdata:
