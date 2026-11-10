@@ -1,0 +1,9 @@
+{
+  "name": "familybank-realtime-banking",
+  "version": "1.0.0",
+  "description": "Real-time mobile banking prototype (Zetech diploma project). No external npm packages.",
+  "main": "server.js",
+  "engines": { "node": ">=22.13" },
+  "scripts": { "start": "node server.js", "test": "node test.js" },
+  "license": "MIT"
+}

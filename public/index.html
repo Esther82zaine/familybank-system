@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Family Bank Mobile (prototype)</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;background:#e8efeb;color:#17261f}
+#app{max-width:430px;margin:0 auto;min-height:100vh;background:#f4f7f5;position:relative;padding-bottom:70px}
+#app.wide{max-width:1000px}
+.hd{background:#1f6f46;color:#fff;padding:18px 18px 16px}.row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.bell{background:rgba(255,255,255,.18);border:0;color:#fff;border-radius:50%;width:38px;height:38px;font-size:17px;cursor:pointer;position:relative}
+.bell b{position:absolute;top:-4px;right:-4px;background:#f2a900;color:#17261f;font-size:11px;min-width:17px;height:17px;border-radius:9px;display:flex;align-items:center;justify-content:center}
+.bal{font-size:32px;font-weight:800;margin:6px 0 2px}.sub{font-size:12px;opacity:.85}
+.card{background:#fff;border:1px solid #dbe5df;border-radius:14px;margin:12px 14px;padding:14px}
+h3{margin:0 0 8px;font-size:15px}.tiles{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 14px}
+.tile{background:#fff;border:1.5px solid #1f6f46;color:#1f6f46;border-radius:12px;padding:14px;font-weight:700;text-align:center;cursor:pointer}
+.tx{display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid #edf1ee;font-size:14px}.tx:last-child{border:0}.tx small{display:block;color:#6a7a72}
+.in{color:#1f6f46;font-weight:700}.out{color:#c0392b;font-weight:700}
+label{display:block;font-size:12px;font-weight:700;margin:10px 0 4px;color:#3a4a42}
+input,select,textarea{width:100%;padding:11px;border:1.5px solid #cfdad3;border-radius:10px;font:inherit;background:#fff}
+button.p{width:100%;margin-top:14px;padding:13px;border:0;border-radius:12px;background:#1f6f46;color:#fff;font:700 15px inherit;cursor:pointer}
+button.s{padding:7px 11px;border:1px solid #1f6f46;background:#fff;color:#1f6f46;border-radius:8px;font-weight:700;cursor:pointer;margin-right:6px}
+.err{color:#c0392b;font-size:13px;margin-top:8px}.ok{color:#1f6f46;font-size:13px;margin-top:8px;font-weight:600}
+.nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:430px;display:flex;background:#fff;border-top:1px solid #dbe5df}
+.wide .nav{max-width:1000px}
+.nav button{flex:1;border:0;background:none;padding:10px 2px;font:600 11px inherit;color:#6a7a72;cursor:pointer}.nav .on{color:#1f6f46}.nav span{display:block;font-size:18px}
+#toast{position:fixed;top:12px;left:50%;transform:translateX(-50%);width:min(400px,94vw);z-index:9;display:flex;flex-direction:column;gap:8px}
+.tt{white-space:pre-line;background:#17261f;color:#fff;padding:12px 14px;border-radius:14px;font-size:13px;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+table{width:100%;border-collapse:collapse;font-size:13px}th{text-align:left;color:#6a7a72;padding:6px}td{padding:8px 6px;border-top:1px solid #edf1ee}
+.tl{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:12px 14px}.tl div{background:#fff;border:1px solid #dbe5df;border-radius:12px;padding:12px}.tl b{display:block;font-size:22px}
+.center{text-align:center;padding:40px 22px 10px}.logo{display:inline-flex;width:54px;height:54px;border-radius:14px;background:#1f6f46;color:#fff;font:800 22px system-ui;align-items:center;justify-content:center;border-bottom:5px solid #f2a900}
+.hint{font-size:12px;color:#6a7a72;margin:10px 14px}.stars button{background:none;border:0;font-size:26px;color:#c9d3cd;cursor:pointer}.stars .s{color:#f2a900}
+.bd{padding:2px 8px;border-radius:12px;font-size:11px;font-weight:700;background:#dff3e7;color:#1f6f46}.bd.w{background:#fdf0cf;color:#8a5a00}.bd.r{background:#fde2e0;color:#a5231a}
+.scroll{overflow-x:auto}
+</style>
+</head>
+<body>
+<div id="toast"></div>
+<div id="app"></div>
+<script>
+const $ = s => document.querySelector(s), E = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const fmt = n => Number(n).toLocaleString('en-KE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const when = s => new Date(s.replace(' ', 'T') + 'Z').toLocaleString('en-KE', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' });
+const S = { token: sessionStorage.token || '', step: 'login', phone: '', tab: 'home', me: null, txns: [], tickets: [], ref: crypto.randomUUID().slice(0, 12), rate: 0, hint: '', sock: null };
+
+async function api(p, o = {}) {
+  const r = await fetch('/api' + p, { method: o.m || 'GET', headers: { 'Content-Type': 'application/json', ...(S.token ? { Authorization: 'Bearer ' + S.token } : {}) }, body: o.b ? JSON.stringify(o.b) : undefined });
+  const j = await r.json().catch(() => ({}));
+  if (r.status === 401 && S.token) { logout(); throw new Error('Session expired. Please sign in again.'); }
+  if (!r.ok) throw new Error(j.error || 'Request failed');
+  return j;
+}
+function toast(m) { const e = document.createElement('div'); e.className = 'tt'; e.textContent = m; $('#toast').appendChild(e); setTimeout(() => e.remove(), 5000); }
+function logout() { S.sock?.close(); sessionStorage.clear(); Object.assign(S, { token: '', step: 'login', me: null, tab: 'home', hint: '' }); render(); }
+function say(id, m, ok) { const e = $('#' + id); if (e) { e.className = ok ? 'ok' : 'err'; e.textContent = m; } }
+
+function connect() {                           // live updates over WebSocket (Section 3.3.5)
+  S.sock?.close();
+  const s = S.sock = new WebSocket((location.protocol === 'https:' ? 'wss://' : 'ws://') + location.host + '/ws?token=' + S.token);
+  s.onmessage = async e => { const d = JSON.parse(e.data); toast(d.message); await refresh(); };
+  s.onclose = () => { if (S.token && S.sock === s) setTimeout(() => S.token && connect(), 3000); };
+}
+async function refresh() {
+  S.me = await api('/me');
+  if (S.me.user.role === 'CUSTOMER') { S.txns = await api('/transactions'); S.tickets = await api('/tickets'); } else S.staff = await loadStaff();
+  render();
+}
+async function loadStaff() {
+  const o = { tickets: await api('/staff/tickets') };
+  if (S.me.user.role === 'ADMIN') Object.assign(o, { sum: await api('/admin/summary'), txns: await api('/admin/transactions'), audit: await api('/admin/audit'), users: await api('/admin/users') });
+  return o;
+}
+
+// ---------- Views ----------
+function loginView() {
+  const otp = S.step === 'otp';
+  return `<div class="center"><span class="logo">FB</span><h2>Family Bank Mobile</h2><div class="sub" style="color:#6a7a72">${otp ? 'Enter the 6-digit code sent by SMS' : 'Sign in to continue'}</div></div>
+  <div class="card">${otp ? `<label>One-time password</label><input id="otp" inputmode="numeric" maxlength="6" autofocus>` : `<label>Phone number</label><input id="phone" inputmode="tel" value="${E(S.phone)}" placeholder="07XX XXX XXX"><label>PIN</label><input id="pin" type="password" inputmode="numeric" maxlength="4">`}
+  <button class="p" data-act="${otp ? 'otp' : 'login'}">${otp ? 'VERIFY' : 'LOG IN'}</button><div id="msg" class="err"></div></div>
+  <div class="hint">${S.hint}${otp ? '' : '<br>Demo customers: 0712345678, 0722000111, 0733000222 (PIN 1234). Admin 0700000001 (PIN 9999). Agent 0700000002 (PIN 8888).'}</div>`;
+}
+function head(t) { return `<div class="hd"><div class="row"><div><div class="sub">${E(S.me.user.name)}</div><b style="font-size:18px">${t}</b></div><div><button class="bell" data-act="bell">🔔${S.me.unread ? '<b>' + S.me.unread + '</b>' : ''}</button> <button class="bell" data-act="out" title="Sign out">⏻</button></div></div>`; }
+const txRows = a => a.map(t => `<div class="tx"><div>${E(t.title)}<small>${when(t.at)} · ${E(t.status)}</small></div><span class="${t.amount > 0 ? 'in' : 'out'}">${t.amount > 0 ? '+' : '−'}${fmt(Math.abs(t.amount))}</span></div>`).join('') || '<div class="hint">No transactions.</div>';
+
+function home() { const a = S.me.account; return head('Dashboard') + `<div class="sub" style="margin-top:12px">Current account ${a.account_number}</div><div class="bal">KES ${fmt(a.balance)}</div><div class="sub">Live balance · updates by itself</div></div>
+  <div class="tiles"><div class="tile" data-go="send">Send Money</div><div class="tile" data-go="mpesa">M-Pesa</div><div class="tile" data-go="bills">Pay Bills</div><div class="tile" data-go="help">Help &amp; Support</div></div>
+  <div class="card"><h3>Recent activity</h3>${txRows(S.txns.slice(0, 5))}</div>`; }
+function send() { return head('Send Money') + `<div class="sub" style="margin-top:8px">From: Current account (KES ${fmt(S.me.account.balance)})</div></div><div class="card"><label>Recipient account number</label><input id="to" inputmode="numeric" placeholder="e.g. 1234567891"><label>Amount (KES)</label><input id="amt" type="number" min="1"><label>Reference (optional)</label><input id="note"><label>PIN to confirm</label><input id="pin" type="password" inputmode="numeric" maxlength="4"><button class="p" data-act="send">SEND</button><div id="msg"></div></div><div class="hint">Daily limit: KES ${fmt(S.me.dailyLimit)}</div>`; }
+function mpesa() { return head('M-Pesa') + `</div><div class="card"><label>M-Pesa number</label><input id="mph" value="${E(S.me.user.phone)}"><label>Amount (KES)</label><input id="amt" type="number" min="10"><button class="p" data-act="stk">SEND STK PUSH</button><div id="msg"></div></div><div class="hint">Sandbox: the prompt is simulated and the "Safaricom" callback arrives after 3 seconds. Try amount 99 to see a cancelled prompt.</div>`; }
+function bills() { return head('Pay Bills') + `</div><div class="card"><label>Biller</label><select id="bill"><option>Electricity (KPLC)</option><option>Water</option><option>TV</option><option>School Fees</option><option>Airtime</option></select><label>Account / meter number</label><input id="acc"><label>Amount (KES)</label><input id="amt" type="number" min="1"><label>PIN to confirm</label><input id="pin" type="password" inputmode="numeric" maxlength="4"><button class="p" data-act="bill">PAY NOW</button><div id="msg"></div></div>`; }
+function history() { return head('History') + `</div><div class="card"><input id="q" placeholder="Search transactions"><div id="hl">${txRows(S.txns)}</div></div>`; }
+function help() { return head('Support') + `</div><div class="card"><h3>Log a complaint</h3><input id="subj" placeholder="What went wrong?"><textarea id="desc" rows="2" placeholder="Details (optional)" style="margin-top:8px"></textarea><button class="p" data-act="ticket">SUBMIT COMPLAINT</button><div id="msg"></div></div>
+  <div class="card"><h3>My tickets</h3>${S.tickets.map(t => `<div class="tx"><div>${t.code} ${E(t.subject)}</div><span class="bd ${t.status === 'RESOLVED' ? '' : 'w'}">${t.status.replace('_', ' ')}</span></div>`).join('') || '<div class="hint">No tickets yet.</div>'}</div>
+  <div class="card"><h3>Rate our service</h3><div class="stars">${[1, 2, 3, 4, 5].map(i => `<button data-star="${i}" class="${i <= S.rate ? 's' : ''}">★</button>`).join('')}</div><input id="cmt" placeholder="Comment (optional)"><button class="p" data-act="rate">SUBMIT RATING</button><div id="msg2"></div></div>`; }
+function staff() {
+  const x = S.staff, admin = S.me.user.role === 'ADMIN', sm = x.sum;
+  const badge = s => `<span class="bd ${s === 'RESOLVED' || s === 'SUCCESS' || s === 'ACTIVE' ? '' : s === 'FAILED' || s === 'SUSPENDED' ? 'r' : 'w'}">${s}</span>`;
+  return head(admin ? 'Administrator console' : 'Support agent console') + '</div>' + (admin ? `<div class="tl"><div>Transactions<b>${sm.transactions}</b></div><div>Failed<b>${sm.failed}</b></div><div>Open tickets<b>${sm.openTickets}</b></div><div>Fraud alerts<b>${sm.fraudAlerts}</b></div></div>
+  <div class="card scroll"><h3>Latest transactions (today KES ${fmt(sm.volumeToday)}${sm.avgRating ? ' · avg rating ' + sm.avgRating + '/5' : ''})</h3><table><tr><th>When</th><th>Type</th><th>From</th><th>To</th><th>Amount</th><th>Status</th></tr>${x.txns.slice(0, 12).map(t => `<tr><td>${when(t.at)}</td><td>${t.type}</td><td>${E(t.from_name || '-')}</td><td>${E(t.to_name || '-')}</td><td>${fmt(t.amount)}</td><td>${badge(t.status)}</td></tr>`).join('')}</table></div>` : '') + `
+  <div class="card scroll"><h3>Support tickets</h3><table><tr><th>Ticket</th><th>Customer</th><th>Subject</th><th>Status</th><th></th></tr>${x.tickets.map(t => `<tr><td>${t.code}</td><td>${E(t.customer)}</td><td>${E(t.subject)}</td><td>${badge(t.status)}</td><td>${t.status !== 'RESOLVED' ? `<button class="s" data-tk="${t.id}:IN_PROGRESS">Start</button><button class="s" data-tk="${t.id}:RESOLVED">Resolve</button>` : ''}</td></tr>`).join('')}</table></div>` + (admin ? `
+  <div class="card scroll"><h3>Users</h3><table><tr><th>Name</th><th>Phone</th><th>Role</th><th>Status</th><th></th></tr>${x.users.map(u => `<tr><td>${E(u.name)}</td><td>${u.phone}</td><td>${u.role}</td><td>${badge(u.status)}</td><td>${u.role === 'CUSTOMER' ? `<button class="s" data-us="${u.id}:${u.status === 'ACTIVE' ? 'SUSPENDED' : 'ACTIVE'}">${u.status === 'ACTIVE' ? 'Suspend' : 'Activate'}</button>` : ''}</td></tr>`).join('')}</table></div>
+  <div class="card scroll"><h3>Audit log (metadata only)</h3><table><tr><th>When</th><th>User</th><th>Action</th><th>Details</th></tr>${x.audit.slice(0, 20).map(a => `<tr><td>${when(a.at)}</td><td>${E(a.user || '-')}</td><td>${a.action === 'FRAUD_FLAG' ? '<span class="bd r">FRAUD_FLAG</span>' : a.action}</td><td>${E(a.details || '')}</td></tr>`).join('')}</table></div>` : '');
+}
+function render() {
+  const app = $('#app'), role = S.me?.user.role;
+  app.className = role && role !== 'CUSTOMER' ? 'wide' : '';
+  if (!S.token || !S.me) return app.innerHTML = loginView();
+  if (role !== 'CUSTOMER') return app.innerHTML = staff();
+  const V = { home, send, mpesa, bills, history, help }[S.tab];
+  app.innerHTML = V() + `<div class="nav">${[['home', '⌂', 'Home'], ['send', '⇄', 'Pay'], ['history', '☰', 'History'], ['help', '?', 'Help']].map(([k, i, l]) => `<button data-go="${k}" class="${S.tab === k || (k === 'send' && ['mpesa', 'bills'].includes(S.tab)) ? 'on' : ''}"><span>${i}</span>${l}</button>`).join('')}</div>`;
+}
+
+// ---------- Actions ----------
+const v = id => $('#' + id)?.value.trim();
+document.addEventListener('click', async e => {
+  const el = e.target.closest('[data-act],[data-go],[data-star],[data-tk],[data-us]'); if (!el) return; const d = el.dataset;
+  try {
+    if (d.go) { S.tab = d.go; render(); return; }
+    if (d.star) { S.rate = +d.star; render(); return; }
+    if (d.tk) { const [id, st] = d.tk.split(':'); await api('/staff/tickets/' + id, { m: 'PATCH', b: { status: st } }); toast('Ticket updated. The customer was notified.'); return refresh(); }
+    if (d.us) { const [id, st] = d.us.split(':'); await api(`/admin/users/${id}/status`, { m: 'POST', b: { status: st } }); return refresh(); }
+    const a = d.act;
+    if (a === 'out') return logout();
+    if (a === 'login') { S.phone = v('phone'); const r = await api('/auth/login', { m: 'POST', b: { phone: S.phone, pin: v('pin') } }); S.step = 'otp'; S.hint = r.demoOtp ? `📩 SMS sandbox: your code is <b>${r.demoOtp}</b> (shown only in demo mode)` : 'Code sent by SMS.'; render(); }
+    if (a === 'otp') { const r = await api('/auth/verify-otp', { m: 'POST', b: { phone: S.phone, otp: v('otp') } }); S.token = sessionStorage.token = r.token; S.step = 'login'; S.hint = ''; connect(); await refresh(); }
+    if (a === 'send') { const r = await api('/transfer', { m: 'POST', b: { toAccount: v('to'), amount: v('amt'), note: v('note'), pin: v('pin'), reference: S.ref } }); S.ref = crypto.randomUUID().slice(0, 12); await refresh(); say('msg', `Sent. Receipt ref ${r.reference}. New balance KES ${fmt(r.balance)}.`, true); }
+    if (a === 'bill') { const r = await api('/bills', { m: 'POST', b: { biller: v('bill'), accountNo: v('acc'), amount: v('amt'), pin: v('pin') } }); await refresh(); say('msg', `Paid. Receipt ${r.reference}. A notification was sent.`, true); }
+    if (a === 'stk') { await api('/mpesa/stkpush', { m: 'POST', b: { phone: v('mph'), amount: v('amt') } }); say('msg', 'Status: waiting for confirmation… enter your M-Pesa PIN on the phone.', true); }
+    if (a === 'ticket') { const r = await api('/tickets', { m: 'POST', b: { subject: v('subj'), description: v('desc') } }); await refresh(); say('msg', `Ticket ${r.code} created.`, true); }
+    if (a === 'rate') { if (!S.rate) throw new Error('Choose 1 to 5 stars'); await api('/feedback', { m: 'POST', b: { rating: S.rate, comment: v('cmt') } }); S.rate = 0; render(); say('msg2', 'Thank you for your feedback.', true); }
+    if (a === 'bell') { const n = await api('/notifications'); toast(n.length ? n.slice(0, 3).map(x => x.message).join('\n') : 'No notifications yet.'); await refresh(); }
+  } catch (err) { say('msg', err.message, false); if (!$('#msg')) toast(err.message); }
+});
+document.addEventListener('input', async e => { if (e.target.id === 'q') { S.txns = await api('/transactions?q=' + encodeURIComponent(e.target.value)); $('#hl').innerHTML = txRows(S.txns); } });
+(S.token ? (connect(), refresh().catch(logout)) : render());
+</script>
+</body>
+</html>
